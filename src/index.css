@@ -2,13 +2,14 @@
   --bg: #f7f5f0;
   --bg-rgb: 247, 245, 240;
   --surface: #ffffff;
-  --surface-border: #e6e2d6;
+  --surface-border: #8a8780;
   --text: #1d2330;
   --text-dim: #4e5565;
-  --text-dimmer: #8991a0;
+  --text-dimmer: #666c78;
   --accent: #123a52;
   --accent-ink: #123a52;
   --gold: #b3813f;
+  --gold-ink: #8f6732;
   --gold-bg: rgba(179, 129, 63, 0.1);
   --gold-border: rgba(179, 129, 63, 0.35);
 
@@ -36,6 +37,7 @@
   --accent: #7ea7c9;
   --accent-ink: #9cc0de;
   --gold: #d9b06b;
+  --gold-ink: #d9b06b;
   --gold-bg: rgba(217, 176, 107, 0.12);
   --gold-border: rgba(217, 176, 107, 0.35);
   color-scheme: dark;

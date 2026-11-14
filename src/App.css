@@ -39,7 +39,7 @@
 }
 
 .nav-desktop a:hover {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .theme-toggle {
@@ -57,7 +57,7 @@
 
 .theme-toggle:hover {
   border-color: var(--gold-border);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .theme-toggle svg {
@@ -139,7 +139,7 @@
   font-weight: 600;
   letter-spacing: 1.6px;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-ink);
   margin-bottom: 10px;
 }
 
@@ -200,7 +200,7 @@
 
 .role-cycler {
   display: inline-block;
-  color: var(--gold);
+  color: var(--gold-ink);
   font-weight: 600;
   position: relative;
   vertical-align: top;
@@ -258,7 +258,7 @@
 
 .btn-ghost:hover {
   border-color: var(--gold-border);
-  color: var(--gold);
+  color: var(--gold-ink);
   transform: translateY(-1px);
 }
 
@@ -284,7 +284,7 @@
 
 .filter-pill:hover {
   border-color: var(--gold-border);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .filter-pill.active {
@@ -356,7 +356,7 @@
 .timeline-dates {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--gold);
+  color: var(--gold-ink);
   white-space: nowrap;
 }
 
@@ -393,7 +393,7 @@
 
 .timeline-note {
   font-size: 13.5px;
-  color: var(--gold);
+  color: var(--gold-ink);
   font-style: italic;
   margin-top: -4px;
 }
@@ -420,7 +420,7 @@
 }
 
 .project-org {
-  color: var(--gold);
+  color: var(--gold-ink);
   font-weight: 600;
 }
 
@@ -583,7 +583,7 @@
 }
 
 .contact-links a {
-  color: var(--gold);
+  color: var(--gold-ink);
   border-bottom: 1px solid transparent;
   transition: border-color 0.15s ease;
 }
@@ -615,7 +615,7 @@
 }
 
 .footer-links a:hover {
-  color: var(--gold);
+  color: var(--gold-ink);
   border-color: var(--gold);
 }
 
