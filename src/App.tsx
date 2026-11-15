@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import {
   CONTACT,
   EDUCATION,
@@ -27,8 +27,26 @@ type Filter = 'All' | Track
 const EASE = [0.16, 1, 0.3, 1] as const
 
 function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light'
-  return window.localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
+  if (typeof window === 'undefined') return 'dark'
+  try {
+    const stored = window.localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark') return stored
+  } catch {
+    // localStorage unavailable; fall through to system preference
+  }
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
+function italicizeLastWord(title: string) {
+  const words = title.split(' ')
+  const last = words.pop() as string
+  const rest = words.join(' ')
+  return (
+    <>
+      {rest ? `${rest} ` : null}
+      <em>{last}</em>
+    </>
+  )
 }
 
 function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
@@ -56,10 +74,12 @@ function Reveal({
   children,
   delay = 0,
   className,
+  hoverLift = false,
 }: {
   children: React.ReactNode
   delay?: number
   className?: string
+  hoverLift?: boolean
 }) {
   return (
     <motion.div
@@ -68,15 +88,24 @@ function Reveal({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, delay, ease: EASE }}
+      whileHover={hoverLift ? { y: -6, transition: { duration: 0.25, ease: EASE } } : undefined}
     >
       {children}
     </motion.div>
   )
 }
 
-function Section({ id, children }: { id: string; children: React.ReactNode }) {
+function Section({
+  id,
+  children,
+  className,
+}: {
+  id: string
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <section id={id} className="section">
+    <section id={id} className={`section ${className ?? ''}`}>
       <div className="section-inner">{children}</div>
     </section>
   )
@@ -85,8 +114,10 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <Reveal className="heading-block">
-      <span className="eyebrow">{eyebrow}</span>
-      <h2 className="section-title">{title}</h2>
+      <span className="eyebrow" style={{ '--n': `${eyebrow.length + 1}ch` } as React.CSSProperties}>
+        {eyebrow}
+      </span>
+      <h2 className="section-title">{italicizeLastWord(title)}</h2>
     </Reveal>
   )
 }
@@ -140,12 +171,18 @@ function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [menuOpen, setMenuOpen] = useState(false)
   const [filter, setFilter] = useState<Filter>('All')
+  const [openExperience, setOpenExperience] = useState<number | null>(0)
+  const [openProject, setOpenProject] = useState<number | null>(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    window.localStorage.setItem('theme', theme)
+    try {
+      window.localStorage.setItem('theme', theme)
+    } catch {
+      // localStorage unavailable; theme just won't persist
+    }
     const meta = document.querySelector('meta[name="theme-color"]')
-    meta?.setAttribute('content', theme === 'dark' ? '#0b0f16' : '#f7f5f0')
+    meta?.setAttribute('content', theme === 'dark' ? '#1F1211' : '#F6F0E7')
   }, [theme])
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
@@ -153,6 +190,7 @@ function App() {
   const matchesFilter = (tracks: Track[]) => filter === 'All' || tracks.includes(filter as Track)
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="page-content">
       <header className="navbar">
         <a href="#home" className="brand">Chetana Reddy Sunkugari</a>
@@ -200,7 +238,7 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
           >
-            Chetana Reddy Sunkugari
+            <em>Chetana</em> Reddy Sunkugari
           </motion.h1>
 
           <motion.p
@@ -234,7 +272,7 @@ function App() {
       </section>
 
       <Section id="experience">
-        <SectionHeading eyebrow="Career" title="Experience" />
+        <SectionHeading eyebrow="$ experience --all" title="Experience" />
         <Reveal delay={0.1}>
           <FilterBar active={filter} onChange={setFilter} />
         </Reveal>
@@ -242,22 +280,38 @@ function App() {
           {EXPERIENCE.map((e, i) => {
             const visibleBullets = e.bullets.filter((b) => matchesFilter(b.tracks))
             const dimmed = filter !== 'All' && visibleBullets.length === 0
+            const isOpen = openExperience === i
             return (
-              <Reveal key={e.role + e.company} delay={i * 0.06} className={`timeline-card ${dimmed ? 'dimmed' : ''}`}>
-                <div className="timeline-head">
-                  <div>
+              <Reveal
+                key={e.role + e.company}
+                delay={i * 0.06}
+                className={`timeline-row ${dimmed ? 'dimmed' : ''}`}
+              >
+                <button
+                  className="timeline-toggle"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenExperience(isOpen ? null : i)}
+                >
+                  <div className="timeline-toggle-main">
                     <h3>{e.role}</h3>
                     <p className="timeline-sub">{e.company} &middot; {e.location}</p>
                   </div>
-                  <span className="timeline-dates">{e.dates}</span>
-                </div>
-                <ul>
-                  {e.bullets.map((b) => (
-                    <li key={b.text} className={matchesFilter(b.tracks) ? '' : 'faded'}>
-                      {b.text}
-                    </li>
-                  ))}
-                </ul>
+                  <div className="timeline-right">
+                    <span className="timeline-dates">{e.dates}</span>
+                    <span className="timeline-sign" aria-hidden="true">{isOpen ? '−' : '+'}</span>
+                  </div>
+                </button>
+                {isOpen && (
+                  <div className="timeline-body">
+                    <ul>
+                      {e.bullets.map((b) => (
+                        <li key={b.text} className={matchesFilter(b.tracks) ? '' : 'faded'}>
+                          {b.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </Reveal>
             )
           })}
@@ -265,30 +319,46 @@ function App() {
       </Section>
 
       <Section id="projects">
-        <SectionHeading eyebrow="Applied Work" title="Industry & Government Projects" />
+        <SectionHeading eyebrow="$ projects --selected" title="Industry & Government Projects" />
         <Reveal delay={0.1}>
           <FilterBar active={filter} onChange={setFilter} />
         </Reveal>
         <div className="projects-grid">
           {PROJECTS.map((p, i) => {
             const dimmed = !matchesFilter(p.tracks)
+            const isOpen = openProject === i
             return (
-              <Reveal key={p.title} delay={i * 0.07} className={`project-card ${dimmed ? 'dimmed' : ''}`}>
+              <Reveal key={p.title} delay={i * 0.07} className={`project-card ${dimmed ? 'dimmed' : ''}`} hoverLift>
                 <div className="project-head">
                   <span className="project-org">{p.org}</span>
-                  <span className="project-dates">{p.dates}</span>
+                  <span className="project-dates">
+                    {String(i + 1).padStart(2, '0')} / {String(PROJECTS.length).padStart(2, '0')}
+                  </span>
                 </div>
                 <h3>{p.title}</h3>
                 <p className="project-desc">{p.summary}</p>
-                <ul className="project-bullets">
-                  {p.bullets.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
+                {isOpen && (
+                  <div className="project-details">
+                    <ul className="project-bullets">
+                      {p.bullets.map((b) => (
+                        <li key={b}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="tag-row">
                   {p.tracks.map((t) => (
-                    <span className="tag tag-sm" key={t}>{t}</span>
+                    <span className="tag" key={t}>{t}</span>
                   ))}
+                </div>
+                <div className="project-links">
+                  <button
+                    className="details-toggle"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenProject(isOpen ? null : i)}
+                  >
+                    {isOpen ? 'Hide details −' : 'Show details +'}
+                  </button>
                 </div>
               </Reveal>
             )
@@ -297,11 +367,13 @@ function App() {
       </Section>
 
       <Section id="skills">
-        <SectionHeading eyebrow="Toolkit" title="Skills" />
+        <SectionHeading eyebrow="$ skills --stack" title="Skills" />
         <div className="skills-grid">
           {SKILLS.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08} className="skill-card">
-              <div className="skill-card-head">{s.label}</div>
+            <Reveal key={s.label} delay={i * 0.08} className="skill-card" hoverLift>
+              <div className="skill-card-head">
+                {s.label} <span className="skill-count">({s.items.length})</span>
+              </div>
               <ul>
                 {s.items.map((item) => (
                   <li key={item}>{item}</li>
@@ -313,25 +385,25 @@ function App() {
       </Section>
 
       <Section id="education">
-        <SectionHeading eyebrow="Background" title="Education" />
+        <SectionHeading eyebrow="$ education --history" title="Education" />
         <div className="timeline">
           {EDUCATION.map((e, i) => (
-            <Reveal key={e.degree} delay={i * 0.07} className="timeline-card">
-              <div className="timeline-head">
-                <div>
+            <Reveal key={e.degree} delay={i * 0.07} className="timeline-row">
+              <div className="timeline-toggle" style={{ cursor: 'default' }}>
+                <div className="timeline-toggle-main">
                   <h3>{e.degree}</h3>
                   <p className="timeline-sub">{e.school} &middot; {e.location}</p>
+                  {e.note && <p className="timeline-note">{e.note}</p>}
                 </div>
                 <span className="timeline-dates">{e.dates}</span>
               </div>
-              {e.note && <p className="timeline-note">{e.note}</p>}
             </Reveal>
           ))}
         </div>
       </Section>
 
-      <Section id="contact">
-        <SectionHeading eyebrow="Reach Out" title="Let's talk" />
+      <Section id="contact" className="contact-section">
+        <SectionHeading eyebrow="$ contact --open" title="Let's talk" />
         <Reveal delay={0.1} className="contact-box">
           <p>
             Open to opportunities in supply chain, business operations and strategy &amp; operations.
@@ -357,6 +429,7 @@ function App() {
         </div>
       </footer>
     </div>
+    </MotionConfig>
   )
 }
 
